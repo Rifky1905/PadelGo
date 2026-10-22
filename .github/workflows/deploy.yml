@@ -1,0 +1,60 @@
+# ============================================================
+# CI/CD PadelGo — build web Flutter & deploy ke GitHub Pages
+# Berjalan otomatis setiap push ke branch main.
+#
+# Aktivasi satu kali di repo:
+#   Settings → Pages → Build and deployment → Source: "GitHub Actions"
+# Hasil: https://rifky1905.github.io/PadelGo/
+# ============================================================
+name: Deploy Web to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # bisa dijalankan manual dari tab Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # --base-href WAJIB sesuai nama repo agar asset termuat di
+      # https://<user>.github.io/PadelGo/ (bukan root domain).
+      - name: Build web release
+        run: flutter build web --release --base-href /PadelGo/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
