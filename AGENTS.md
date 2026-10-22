@@ -43,3 +43,9 @@ Aplikasi Flutter untuk booking lapangan padel. Brand identity: pink (#E91E63).
 - Status booking: `pending → confirmed → completed` atau `cancelled`. Update hanya admin — policy `bookings_update` RLS menolak user biasa.
 - Migrasi DB incremental ada di `supabase/migration_*.sql` — jalankan berurutan jika schema.sql sudah pernah di-run sebelumnya.
 - Port 8080 bisa tertinggal saat kill `flutter run`; gunakan port lain (8090).
+
+## Git & Deployment
+
+- Remote: `https://github.com/Rifky1905/PadelGo.git` (branch `main`). Commit pakai `git -c user.name="Rifky Arya Firdaus" -c user.email="Rifky1905@users.noreply.github.com"` (config identitas belum diset user).
+- **Auto-commit**: setiap selesai mengubah kode, jalankan `git add -A` + commit + `git push origin main` (diminta user).
+- CI/CD: `.github/workflows/deploy.yml` — push ke `main` → `flutter build web --release --base-href /PadelGo/` → deploy GitHub Pages (`https://rifky1905.github.io/PadelGo/`).
