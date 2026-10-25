@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../models/court.dart';
 import '../../../utils/app_theme.dart';
+import '../../../utils/constants.dart';
 import '../../../utils/formatters.dart';
+import '../../../utils/links.dart';
 import '../../../widgets/court_image.dart';
+import '../../../widgets/court_map.dart';
 import '../../../widgets/facility_item.dart';
 import '../../../widgets/section_title.dart';
 import '../booking/booking_screen.dart';
@@ -192,58 +195,70 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Lokasi
+                  // Lokasi — kartu alamat + peta interaktif
                   const SectionTitle(title: 'Lokasi'),
                   const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
+                  Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      onTap: () => openLink(AppConstants.mapsUrl),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: PadelGoColors.divider),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: PadelGoColors.primarySoft,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.location_on,
-                              color: PadelGoColors.primary),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: PadelGoColors.divider),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                court.address,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: PadelGoColors.textPrimary,
-                                ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: PadelGoColors.primarySoft,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${court.distanceKm.toStringAsFixed(1)} km dari lokasimu',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: PadelGoColors.textSecondary,
-                                ),
+                              child: const Icon(Icons.location_on,
+                                  color: PadelGoColors.primary),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    court.address,
+                                    style: const TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: PadelGoColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'Ketuk untuk buka di Google Maps',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: PadelGoColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            const Icon(Icons.open_in_new,
+                                size: 16, color: PadelGoColors.textHint),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  const CourtMap(height: 220),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => openLink(AppConstants.mapsUrl),
                     icon: const Icon(Icons.directions_outlined, size: 19),
                     label: const Text('Petunjuk Arah (Google Maps)'),
                     style: OutlinedButton.styleFrom(

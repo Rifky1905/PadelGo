@@ -38,6 +38,115 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Dialog "Lupa Kata Sandi" — kirim link reset ke email user
+  /// lewat Supabase Auth.
+  Future<void> _showForgotPassword() async {
+    final emailController =
+        TextEditingController(text: _emailController.text.trim());
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        String? error;
+        bool sending = false;
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('Reset Kata Sandi'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Masukkan email akun kamu. Kami akan mengirim link '
+                  'untuk membuat kata sandi baru.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: PadelGoColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'contoh: kamu@email.com',
+                    prefixIcon: Icon(Icons.email_outlined),
+                    fillColor: PadelGoColors.background,
+                  ),
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    error!,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: PadelGoColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: sending
+                    ? null
+                    : () async {
+                        final email = emailController.text.trim();
+                        if (!email.contains('@')) {
+                          setDialogState(
+                              () => error = 'Masukkan email yang valid.');
+                          return;
+                        }
+                        setDialogState(() {
+                          sending = true;
+                          error = null;
+                        });
+                        final ok = await dialogContext
+                            .read<AuthProvider>()
+                            .resetPassword(email);
+                        if (!dialogContext.mounted) return;
+                        if (ok) {
+                          Navigator.of(dialogContext).pop(true);
+                        } else {
+                          setDialogState(() {
+                            sending = false;
+                            error = dialogContext
+                                    .read<AuthProvider>()
+                                    .error ??
+                                'Gagal mengirim email reset.';
+                          });
+                        }
+                      },
+                child: sending
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Kirim Link'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    emailController.dispose();
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Link reset terkirim! Cek inbox/spam email kamu.'),
+        ),
+      );
+    }
+  }
+
   Future<void> _login() async {
     final auth = context.read<AuthProvider>();
     final success = await auth.login(
@@ -359,7 +468,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const Spacer(),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: _showForgotPassword,
                                     child: const Text(
                                       'Lupa Kata Sandi?',
                                       style: TextStyle(
@@ -441,9 +550,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               // Daftar akun (hanya role user)
                               if (_role == AppRole.user)
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  crossAxisAlignment:
+                                      WrapCrossAlignment.center,
                                   children: [
                                     const Text(
                                       'Belum punya akun PadelGo? ',
@@ -466,7 +576,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         );
                                       },
                                       child: const Text(
-                                        'Daftar Akun Baru Sekarang',
+                                        'Daftar Sekarang',
                                         style: TextStyle(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,

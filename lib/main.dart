@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import 'models/user.dart';
 import 'providers/admin_provider.dart';
@@ -10,6 +13,7 @@ import 'services/supabase_service.dart';
 import 'utils/app_theme.dart';
 import 'utils/constants.dart';
 import 'views/admin/admin_navigation.dart';
+import 'views/auth/reset_password_screen.dart';
 import 'views/landing/landing_page.dart';
 import 'views/user/main_navigation.dart';
 
@@ -47,8 +51,37 @@ class PadelGoApp extends StatelessWidget {
 /// - belum login  -> LandingPage
 /// - role admin   -> AdminNavigation
 /// - role user    -> MainNavigation
-class AuthGate extends StatelessWidget {
+/// Juga menangkap event `passwordRecovery` — saat user membuka link
+/// reset password dari email, tampilkan ResetPasswordScreen.
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  StreamSubscription<sb.AuthState>? _authSub;
+  bool _passwordRecovery = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (SupabaseService.isReady) {
+      _authSub = SupabaseService.authStateChanges().listen((state) {
+        if (state.event == sb.AuthChangeEvent.passwordRecovery &&
+            mounted) {
+          setState(() => _passwordRecovery = true);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +90,11 @@ class AuthGate extends StatelessWidget {
     if (auth.restoring) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_passwordRecovery) {
+      return ResetPasswordScreen(
+        onDone: () => setState(() => _passwordRecovery = false),
       );
     }
     if (!auth.isLoggedIn) return const LandingPage();

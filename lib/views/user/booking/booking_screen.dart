@@ -43,7 +43,18 @@ class _BookingScreenState extends State<BookingScreen> {
   Set<int> _occupiedFor(BuildContext context) =>
       context.watch<CourtProvider>().occupiedFor(court.id, _selectedDate);
 
+  /// true jika waktu mulai slot sudah lewat — booking bersifat
+  /// real-time: jam yang sudah berlalu tidak bisa dipilih.
+  bool _isPastHour(int hour) {
+    final now = DateTime.now();
+    if (!DateUtils.isSameDay(_selectedDate, now)) return false;
+    final slotStart = DateTime(
+        _selectedDate.year, _selectedDate.month, _selectedDate.day, hour);
+    return !slotStart.isAfter(now);
+  }
+
   void _toggleSlot(int hour) {
+    if (_isPastHour(hour)) return;
     setState(() {
       if (!_selectedHours.remove(hour)) _selectedHours.add(hour);
     });
@@ -186,6 +197,8 @@ class _BookingScreenState extends State<BookingScreen> {
                 _legend(PadelGoColors.bookedBg, PadelGoColors.booked, 'Terisi'),
                 const SizedBox(width: 10),
                 _legend(PadelGoColors.primary, PadelGoColors.primary, 'Dipilih'),
+                const SizedBox(width: 10),
+                _legend(PadelGoColors.bookedBg, PadelGoColors.textHint, 'Lewat'),
               ],
             ),
           ),
@@ -203,11 +216,13 @@ class _BookingScreenState extends State<BookingScreen> {
               itemCount: AppConstants.closeHour - AppConstants.openHour,
               itemBuilder: (context, i) {
                 final hour = AppConstants.openHour + i;
-                final state = occupied.contains(hour)
-                    ? SlotState.booked
-                    : _selectedHours.contains(hour)
-                        ? SlotState.selected
-                        : SlotState.available;
+                final state = _isPastHour(hour)
+                    ? SlotState.past
+                    : occupied.contains(hour)
+                        ? SlotState.booked
+                        : _selectedHours.contains(hour)
+                            ? SlotState.selected
+                            : SlotState.available;
                 return TimeSlotTile(
                   hour: hour,
                   state: state,

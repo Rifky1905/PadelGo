@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 
-enum SlotState { available, booked, selected }
+enum SlotState { available, booked, selected, past }
 
 /// Satu tile slot waktu per jam pada grid pemilihan jadwal.
 /// - Tersedia: putih bersih + border tipis
@@ -34,6 +34,12 @@ class TimeSlotTile extends StatelessWidget {
           PadelGoColors.booked,
           PadelGoColors.divider,
         ),
+      // Jam yang sudah lewat — redup, tidak bisa diklik.
+      SlotState.past => (
+          PadelGoColors.bookedBg,
+          PadelGoColors.textHint,
+          PadelGoColors.divider,
+        ),
       SlotState.available => (
           Colors.white,
           PadelGoColors.textPrimary,
@@ -45,7 +51,9 @@ class TimeSlotTile extends StatelessWidget {
       color: bg,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        onTap: state == SlotState.booked ? null : onTap,
+        onTap: state == SlotState.booked || state == SlotState.past
+            ? null
+            : onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
           decoration: BoxDecoration(
@@ -73,7 +81,9 @@ class TimeSlotTile extends StatelessWidget {
                   color: fg,
                   decoration: state == SlotState.booked
                       ? TextDecoration.lineThrough
-                      : null,
+                      : state == SlotState.past
+                          ? TextDecoration.lineThrough
+                          : null,
                 ),
               ),
               const SizedBox(height: 1),
@@ -82,6 +92,7 @@ class TimeSlotTile extends StatelessWidget {
                   SlotState.available => 'Tersedia',
                   SlotState.booked => 'Terisi',
                   SlotState.selected => 'Dipilih',
+                  SlotState.past => 'Lewat',
                 },
                 style: TextStyle(
                   fontSize: 9.5,

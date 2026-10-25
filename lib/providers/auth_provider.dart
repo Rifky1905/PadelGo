@@ -47,6 +47,40 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(String name, String email, String password) =>
       _run(() => SupabaseService.signUp(name, email, password));
 
+  /// Kirim email reset password (fitur "Lupa Kata Sandi").
+  /// Mengembalikan true jika permintaan berhasil dikirim.
+  Future<bool> resetPassword(String email) =>
+      _runVoid(() => SupabaseService.resetPassword(email));
+
+  /// Simpan password baru saat sesi recovery aktif (user membuka
+  /// link reset dari email). Mengembalikan true jika berhasil.
+  Future<bool> updatePassword(String newPassword) =>
+      _runVoid(() => SupabaseService.updatePassword(newPassword));
+
+  Future<bool> _runVoid(Future<void> Function() action) async {
+    if (!SupabaseService.isReady) {
+      _error = _notConfigured;
+      notifyListeners();
+      return false;
+    }
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await action();
+      return true;
+    } on AuthException catch (e) {
+      _error = e.message;
+      return false;
+    } catch (_) {
+      _error = 'Gagal terhubung ke server. Coba lagi.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> _run(Future<User> Function() action) async {
     if (!SupabaseService.isReady) {
       _error = _notConfigured;

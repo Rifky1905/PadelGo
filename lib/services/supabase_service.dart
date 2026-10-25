@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../config/supabase_config.dart';
@@ -91,6 +92,41 @@ class SupabaseService {
           'Registrasi berhasil — cek email untuk konfirmasi lalu login.');
     }
     return _profile(user.id);
+  }
+
+  /// Kirim email berisi link reset password. Link diarahkan ke URL
+  /// app saat ini (origin) — otomatis cocok untuk localhost, GitHub
+  /// Pages, maupun Vercel.
+  static Future<void> resetPassword(String email) async {
+    try {
+      await _c.auth.resetPasswordForEmail(
+        email.trim(),
+        redirectTo: kIsWeb ? Uri.base.origin : null,
+      );
+    } catch (e) {
+      throw _authErr(e);
+    }
+  }
+
+  /// Set password baru — dipanggil saat sesi recovery aktif, yaitu
+  /// setelah user membuka link reset dari email.
+  static Future<void> updatePassword(String newPassword) async {
+    try {
+      await _c.auth.updateUser(sb.UserAttributes(password: newPassword));
+    } catch (e) {
+      throw _authErr(e);
+    }
+  }
+
+  /// Stream perubahan state auth Supabase — dipakai AuthGate untuk
+  /// menangkap event `passwordRecovery` (user membuka link reset).
+  /// Mengembalikan stream kosong jika SDK belum di-init (mis. di test).
+  static Stream<sb.AuthState> authStateChanges() {
+    try {
+      return _c.auth.onAuthStateChange;
+    } catch (_) {
+      return const Stream.empty();
+    }
   }
 
   /// Profil dari sesi yang masih aktif (untuk restore saat app dibuka).
